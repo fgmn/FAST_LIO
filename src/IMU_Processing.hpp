@@ -52,6 +52,9 @@ class ImuProcess
   Eigen::Matrix<double, 12, 12> Q;
   void Process(const MeasureGroup &meas,  esekfom::esekf<state_ikfom, 12, input_ikfom> &kf_state, PointCloudXYZI::Ptr pcl_un_);
 
+  // IMU-rate odometry publisher (set from outside)
+  void set_imu_odom_publisher(const ros::Publisher &pub) { imu_odom_pub = pub; }
+
   ofstream fout_imu;
   V3D cov_acc;
   V3D cov_gyr;
@@ -82,6 +85,8 @@ class ImuProcess
   int    init_iter_num = 1;
   bool   b_first_frame_ = true;
   bool   imu_need_init_ = true;
+
+  ros::Publisher imu_odom_pub;
 };
 
 ImuProcess::ImuProcess()
@@ -293,6 +298,22 @@ void ImuProcess::UndistortPcl(const MeasureGroup &meas, esekfom::esekf<state_ikf
     }
     double &&offs_t = tail->header.stamp.toSec() - pcl_beg_time;
     IMUpose.push_back(set_pose6d(offs_t, acc_s_last, angvel_last, imu_state.vel, imu_state.pos, imu_state.rot.toRotationMatrix()));
+
+    // Publish IMU-rate odometry at tail timestamp if publisher is set
+    if (imu_odom_pub) {
+      nav_msgs::Odometry odom;
+      odom.header.stamp = ros::Time().fromSec(tail->header.stamp.toSec());
+      odom.header.frame_id = "map";      // world frame
+      odom.child_frame_id  = "sensor";   // body/imu frame
+      odom.pose.pose.position.x = imu_state.pos(0);
+      odom.pose.pose.position.y = imu_state.pos(1);
+      odom.pose.pose.position.z = imu_state.pos(2);
+      odom.pose.pose.orientation.x = imu_state.rot.coeffs()[0];
+      odom.pose.pose.orientation.y = imu_state.rot.coeffs()[1];
+      odom.pose.pose.orientation.z = imu_state.rot.coeffs()[2];
+      odom.pose.pose.orientation.w = imu_state.rot.coeffs()[3];
+      imu_odom_pub.publish(odom);
+    }
   }
 
   /*** calculated the pos and attitude prediction at the frame-end ***/

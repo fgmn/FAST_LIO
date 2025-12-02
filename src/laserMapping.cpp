@@ -858,6 +858,10 @@ int main(int argc, char** argv)
             ("/Odometry", 100000);
     ros::Publisher pubPath          = nh.advertise<nav_msgs::Path> 
             ("/path", 100000);
+    // IMU-frequency odometry publisher
+    ros::Publisher pubImuOdom       = nh.advertise<nav_msgs::Odometry>
+        ("/IMU_Odometry", 100000);
+    p_imu->set_imu_odom_publisher(pubImuOdom);
 //------------------------------------------------------------------------------------------------------
     signal(SIGINT, SigHandle);
     ros::Rate rate(5000);

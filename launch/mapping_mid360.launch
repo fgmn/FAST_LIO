@@ -13,8 +13,9 @@
 	<param name="cube_side_length" type="double" value="1000" />
 	<param name="runtime_pos_log_enable" type="bool" value="0" />
     <node pkg="fast_lio" type="fastlio_mapping" name="laserMapping" output="screen">
-		<remap from="/Odometry" to="/laser_odom_init"/>
-		<remap from="/cloud_registered" to="/registered_point_cloud"/>
+		<!-- originally used for FAEL exploration -->
+		<!-- <remap from="/Odometry" to="/laser_odom_init"/>
+		<remap from="/cloud_registered" to="/registered_point_cloud"/> -->
 	</node>
 
 	<!-- <group if="$(arg rviz)">
